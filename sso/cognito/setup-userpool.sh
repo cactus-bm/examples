@@ -244,6 +244,7 @@ aws cognito-idp add-custom-attributes \
     --user-pool-id $POOL_ID \
     --custom-attributes Name=$GROUPS_ATTRIBUTE,AttributeDataType="String"
 echo Added groups attribute $GROUPS_ATTRIBUTE to pool: $POOL_ID
+echo
 
 DEFAULT_ID_PROVIDER_NAME=azure-${IDENTIFIER}
 read -p "Enter a name for the id provider with a maximum of 32 chars. ($DEFAULT_ID_PROVIDER_NAME) " INPUT
@@ -271,7 +272,7 @@ echo
 CALLBACK_URL=${INPUT:-$DEFAULT_CALLBACK}
 if [[ "$CALLBACK_URL" =~ ^[0-9]+$ ]]; then
   CHOSEN_PORT=$CALLBACK_URL
-  CALLBACK_URL=http://localhost:$CALLBACK_URL
+  CALLBACK_URL=https://localhost:$CALLBACK_URL
 fi
 
 echo "Using $CALLBACK_URL as the callback url."
@@ -299,8 +300,8 @@ read
 echo "Click New App and choose Build an app"
 read
 
-echo "Give the app a name such as \"$IDENTIFIER_NO_ENV\" which is now on the clipboard."
-echo $IDENTIFIER_NO_ENV | pbcopy
+echo "Give the app a name such as \"$DEFAULT_IDENTIFIER_NO_ENV\" which is now on the clipboard."
+echo $DEFAULT_IDENTIFIER_NO_ENV | pbcopy
 read
 
 echo "Click Confirm deployment."

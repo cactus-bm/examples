@@ -12,7 +12,14 @@ COGNITO_CONSOLE_URL=https://console.aws.amazon.com/cognito/home
 echo "Create User Pool and Connect to Azure AD (Entra ID)"
 echo
 
-AWS_PROFILE_PROMPT = "Which AWS profile would you like to use? "
+if [ -f ~/.aws/credentials ]; then
+    echo "AWS Profiles:"
+    echo
+    cat ~/.aws/credentials| grep "\[" | sed 's/\[//g' | sed 's/\]//g'
+    echo
+fi
+
+AWS_PROFILE_PROMPT="Which AWS profile would you like to use? "
 if [ -n "$AWS_PROFILE" ]; then
   AWS_PROFILE_PROMPT="$AWS_PROFILE_PROMPT($AWS_PROFILE) "
 fi
@@ -24,7 +31,7 @@ if [ -z "$AWS_PROFILE" ]; then
 fi
 echo
 
-AWS_REGION_PROMPT = "Which AWS region would you like to use? "
+AWS_REGION_PROMPT="Which AWS region would you like to use? "
 if [ -n "$AWS_REGION_DEFAULT" ]; then
   AWS_REGION_PROMPT="$AWS_REGION_PROMPT($AWS_REGION_DEFAULT) "
 fi

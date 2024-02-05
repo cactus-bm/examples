@@ -162,7 +162,7 @@ echo Enter the value $REPLY_URL into the box, the value will be in your clipboar
 echo $REPLY_URL | pbcopy
 read
 
-echo Press the save button
+echo Press the Save button
 read
 
 echo Close the Bascic SAML configuration section.

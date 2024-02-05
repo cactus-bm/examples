@@ -120,10 +120,10 @@ read
 echo In the left side bar click \"Enterprise Applications\"
 read
 
-echo Click \"New Application\"
+echo Click \"New application\"
 read
 
-echo Click \"Create your own application.\"
+echo Click \"Create your own application\"
 read
 
 echo Enter the name of the app: $IDENTIFIER the value will be in your clipboard if using a mac.

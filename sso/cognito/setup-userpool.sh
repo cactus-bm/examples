@@ -4,6 +4,8 @@ DEFAULT_ENV_NAME=dev
 DEFAULT_MANTISSA=$(date +"%Y%m%d%H%M")
 DEFAULT_COMPANY_IDENTIFIER=org-example
 DEFAULT_GROUPS_ATTRIBUTE=azure_groups
+DEFAULT_PORT=3000
+CHOSEN_PORT=""
 
 AZURE_PORTAL_URL=https://portal.azure.com
 COGNITO_CONSOLE_URL=https://console.aws.amazon.com/cognito/home
@@ -244,12 +246,12 @@ read -p "Enter a name for the client application and assign: ($DEFAULT_CLIENT_NA
 CLIENT_NAME=${INPUT:-$DEFAULT_CLIENT_NAME}
 echo
 
-DEFAULT_CALLBACK=3000
+DEFAULT_CALLBACK=$DEFAULT_PORT
 read -p "Enter the callback url, if working in dev on localhost please enter just the port number. ($DEFAULT_CALLBACK) " INPUT
 echo 
 CALLBACK_URL=${INPUT:-$DEFAULT_CALLBACK}
 if [[ "$CALLBACK_URL" =~ ^[0-9]+$ ]]; then
-  PORT=$CALLBACK_URL
+  CHOSEN_PORT=$CALLBACK_URL
   CALLBACK_URL=http://localhost:$CALLBACK_URL
 fi
 
@@ -321,17 +323,19 @@ read
 echo "Answer all the questions, this probably involes accepting all the defaults."
 read
 
-echo When using react locally https with a self signed certificate can be used with the following command: 
-echo
-echo HTTPS=true PORT=$PORT npm start
-echo 
-echo However, chrome will reject self-signed certificates. 
-echo You can enable self-signed certificates on localhost by going to 
-echo 
-echo chrome://flags/#allow-insecure-localhost 
-echo 
-echo and enabling the option.
-read
+if [ -n "$CHOSEN_PORT" ]; then
+    echo When using react locally https with a self signed certificate can be used with the following command: 
+    echo
+    echo HTTPS=true PORT=$CHOSEN_PORT npm start
+    echo 
+    echo However, chrome will reject self-signed certificates. 
+    echo You can enable self-signed certificates on localhost by going to 
+    echo 
+    echo chrome://flags/#allow-insecure-localhost 
+    echo 
+    echo and enabling the option.
+    read
+fi
 
 echo Open the cognito management console at $COGNITO_CONSOLE_URL
 open $COGNITO_CONSOLE_URL

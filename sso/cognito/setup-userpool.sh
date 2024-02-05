@@ -72,8 +72,9 @@ echo
 TMP_DIR=$(mktemp -d)
 echo Creating a temporary directory at $TMP_DIR
 pushd $TMP_DIR
+echo
 
-DEFAULT_POOL_NAME=$IDENTIFIER-UserPool
+DEFAULT_POOL_NAME=$IDENTIFIER-userPool
 read -p "What would you like to call the user pool? ($DEFAULT_POOL_NAME) " INPUT
 POOL_NAME=${INPUT:-$DEFAULT_POOL_NAME}
 aws cognito-idp create-user-pool --pool-name $POOL_NAME > create-user-pool.json

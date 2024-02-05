@@ -1,34 +1,80 @@
 #!/bin/bash
-MANTISSA=$(date +"%Y%m%d%H%M")
+DEFAULT_APP_NAME=demo-sso
+DEFAULT_ENV_NAME=dev
+DEFAULT_MANTISSA=$(date +"%Y%m%d%H%M")
+DEFAULT_COMPANY_IDENTIFIER=org-example
+DEFAULT_GROUPS_ATTRIBUTE=azure_groups
+
+AZURE_PORTAL_URL=https://portal.azure.com
+COGNITO_CONSOLE_URL=https://console.aws.amazon.com/cognito/home
 echo "Create User Pool and Connect to Azure AD (Entra ID)"
+echo
+
+AWS_PROFILE_PROMPT = "Which AWS profile would you like to use? "
+if [ -n "$AWS_PROFILE" ]; then
+  AWS_PROFILE_PROMPT="$AWS_PROFILE_PROMPT($AWS_PROFILE) "
+fi
+read -p "$AWS_PROFILE_PROMPT" INPUT
+AWS_PROFILE=${INPUT:-$AWS_PROFILE}
+if [ -z "$AWS_PROFILE" ]; then
+  echo "An AWS Profile is required"
+  exit 1
+fi
+echo
+
+AWS_REGION_PROMPT = "Which AWS region would you like to use? "
+if [ -n "$AWS_REGION_DEFAULT" ]; then
+  AWS_REGION_PROMPT="$AWS_REGION_PROMPT($AWS_REGION_DEFAULT) "
+fi
+read -p "$AWS_REGION_PROMPT" INPUT
+AWS_REGION_DEFAULT=${INPUT:-$AWS_REGION_DEFAULT}
+if [ -z "$AWS_REGION_DEFAULT" ]; then
+  echo "An AWS Region is required"
+  exit 2
+fi
+echo
+
+read -p "What is company identifier for you today? ($DEFAULT_COMPANY_IDENTIFIER) " INPUT
+COMPANY_IDENTIFIER=${INPUT:-$DEFAULT_COMPANY_IDENTIFIER}
+echo
+
+read -p "What is the name of the app you are building today? ($DEFAULT_APP_NAME) " INPUT
+APP_NAME=${INPUT:-$DEFAULT_APP_NAME}
+echo
+
+read -p "Which environment are you working in today? ($DEFAULT_ENV_NAME) " INPUT
+ENV_NAME=${INPUT:-$DEFAULT_ENV_NAME}
+echo
+
+read -p "Would you like to use a mantissa today, type NONE to reject the default? ($DEFAULT_MANTISSA) " INPUT
+MANTISSA=${INPUT:-$DEFAULT_MANTISSA}
+echo
+
+DEFAULT_IDENTIIFER=${APP_NAME}-${ENV_NAME}-${MANTISSA}
+DEFAULT_IDENTIFIER_NO_ENV=${APP_NAME}-${MANTISSA}
+if [ "$MANTISSA" == "NONE" ]; then
+  DEFAULT_IDENTIIFER=${APP_NAME}-${ENV_NAME}
+  DEFAULT_IDENTIFIER_NO_ENV=${APP_NAME}
+fi
+read -p "What identifier would you like to use today? ($DEFAULT_IDENTIFIER) " INPUT
+IDENTIFIER=${INPUT:-$DEFAULT_IDENTIFIER}
+echo
 
 TMP_DIR=$(mktemp -d)
 echo Creating a temporary directory at $TMP_DIR
 pushd $TMP_DIR
 
-echo "Please enter the profile that will be used to set up in AWS:"
-read AWS_PROFILE
-echo
-
-echo "Please enter the AWS region that will be used. e.g. us-east-1"
-read AWS_REGION_DEFAULT
-echo
-
-echo "Please enter a name for the Fully Specified Application User Pool e.g. {app-name}-{env}-{optional-miscellaneous}"
-echo e.g. "demo-sso-dev-attempt-$MANTISSA"
-read APP_NAME
-echo
-
-POOL_NAME=$APP_NAME-UserPool
-echo Creating User Pool with Pool Name: $POOL_NAME
+DEFAULT_POOL_NAME=$IDENTIFIER-UserPool
+read -p "What would you like to call the user pool? ($DEFAULT_POOL_NAME) " INPUT
+POOL_NAME=${INPUT:-$DEFAULT_POOL_NAME}
 aws cognito-idp create-user-pool --pool-name $POOL_NAME > create-user-pool.json
 POOL_ID=$(cat create-user-pool.json | jq -r .UserPool.Id)
 echo Created User Pool, $POOL_NAME, with POOL_ID: $POOL_ID
 echo
 
-echo "Please enter a globally unique domain prefix e.g. {reverse-domain}-{app-name}-{env}-{optional-miscellaneous}"
-echo e.g. "bm-cactus-demo-sso-dev-attempt-$MANTISSA"
-read DOMAIN_PREFIX
+DEFAULT_DOMAIN_PREFIX=${COMPANY_IDENTIFIER}-${IDENTIFIER}
+read -p "Please enter a globally unique domain prefix. ($DEFAULT_DOMAIN_PREFIX) " INPUT
+DOMAIN_PREFIX=${INPUT:-$DEFAULT_DOMAIN_PREFIX}
 echo
 
 echo Creating User Pool Domain for pool with id $POOL_ID with Domain Prefix: $DOMAIN_PREFIX
@@ -39,14 +85,17 @@ echo
 echo Assigning variables for future use:
 ENTITY_ID=urn:amazon:cognito:sp:$POOL_ID
 REPLY_URL=https://$DOMAIN_PREFIX.auth.$AWS_REGION_DEFAULT.amazoncognito.com/saml2/idpresponse
+TOKEN_URL=https://$DOMAIN_PREFIX.auth.$AWS_REGION_DEFAULT.amazoncognito.com/oauth2/token
 echo ENTITY_ID: $ENTITY_ID
 echo REPLY_URL: $REPLY_URL
+echo TOKEN_URL: $TOKEN_URL
 echo
 
 echo The following steps must be completed in Azure, who knows if this part is scriptable because, Microsoft, after each instruction press return to get the next instruction.
 echo
 
-echo Log in to the Azure Portal at https://portal.azure.com
+echo Log in to the Azure Portal at $AZURE_PORTAL_URL
+open $AZURE_PORTAL_URL
 read
 
 echo Go to Microsoft Entra ID by entering \"Microsoft Entra ID\" in the search bar at the top of the page.
@@ -61,9 +110,8 @@ read
 echo Click \"Create your own application.\"
 read
 
-echo Enter the name of the app: $APP_NAME
-echo $APP_NAME | pbcopy 
-echo $APP_NAME will be in your clipboard if using a mac.
+echo Enter the name of the app: $IDENTIFIER the value will be in your clipboard if using a mac.
+echo $IDENTIFIER | pbcopy 
 read
 
 echo Choose "\"Integrate any other application you don't find in the gallery (Non-gallery)\""
@@ -147,6 +195,7 @@ read APP_FEDERATION_METADATA_URL
 echo
 
 echo Set yourself up as a user of this application.
+echo
 echo Click Users and groups in the left hand side bar.
 read
 
@@ -165,15 +214,20 @@ read
 echo Click Assign
 read
 
-echo Enter a name for the groups attribute in cognito which will store the azure groups e.g. azure_groups
-read GROUPS_ATTRIBUTE
-
-echo Enter a name for the id provider with a maximum of 32 chars e.g. azure-{app-name}-{env}-{optional-miscellaneous}, e.g. azure-demo-sso-dev-$MANTISSA.
-read ID_PROVIDER_NAME
+read -p "Enter a name for the groups attribute in cognito which will store the azure groups: ($DEFAULT_GROUPS_ATTRIBUTE) " INPUT
+GROUPS_ATTRIBUTE=${INPUT:-$DEFAULT_GROUPS_ATTRIBUTE}
+echo
 
 echo Adding groups attribute $GROUPS_ATTRIBUTE to pool: $POOL_ID
-aws cognito-idp add-custom-attributes --user-pool-id $POOL_ID --custom-attributes Name=$GROUPS_ATTRIBUTE,AttributeDataType="String"
+aws cognito-idp add-custom-attributes \
+    --user-pool-id $POOL_ID \
+    --custom-attributes Name=$GROUPS_ATTRIBUTE,AttributeDataType="String"
 echo Added groups attribute $GROUPS_ATTRIBUTE to pool: $POOL_ID
+
+DEFAULT_ID_PROVIDER_NAME=azure-${IDENTIFIER}
+read -p "Enter a name for the id provider with a maximum of 32 chars. ($DEFAULT_ID_PROVIDER_NAME) " INPUT
+ID_PROVIDER_NAME=${INPUT:-$DEFAULT_ID_PROVIDER_NAME}
+echo
 
 echo Creating identity provider $ID_PROVIDER_NAME.
 aws cognito-idp create-identity-provider \
@@ -185,34 +239,21 @@ aws cognito-idp create-identity-provider \
 echo Created identity provider $ID_PROVIDER_NAME
 echo
 
-echo Enter a name for the client application and assign e.g. {app-name}-{env}-{optional-miscellaneous}-client e.g. demo-sso-dev-client-$MANTISSA
-read CLIENT_NAME
+DEFAULT_CLIENT_NAME=${IDENTIFIER}-client
+read -p "Enter a name for the client application and assign: ($DEFAULT_CLIENT_NAME) " INPUT
+CLIENT_NAME=${INPUT:-$DEFAULT_CLIENT_NAME}
 echo
 
-echo Enter the callback url, if working in dev this will want to be something like 
+DEFAULT_CALLBACK=3000
+read -p "Enter the callback url, if working in dev on localhost please enter just the port number. ($DEFAULT_CALLBACK) " INPUT
 echo 
-echo https://localhost:3000 
-echo
-echo you may want to use a different port so that you can have different applications on different ports.
-echo 
-echo This will have to be https in production.
-read CALLBACK_URL
-echo
+CALLBACK_URL=${INPUT:-$DEFAULT_CALLBACK}
+if [[ "$CALLBACK_URL" =~ ^[0-9]+$ ]]; then
+  PORT=$CALLBACK_URL
+  CALLBACK_URL=http://localhost:$CALLBACK_URL
+fi
 
-echo When using react locally https with a self signed certificate can be used with the following command: 
-echo
-echo HTTPS=true npm start
-echo 
-echo However, chrome will reject self-signed certificates. 
-echo You can enable self-signed certificates on localhost by going to 
-echo 
-echo chrome://flags/#allow-insecure-localhost 
-echo 
-echo and enabling the option.
-read
-
-echo "If working in dev enter the port number below (if not press return):"
-read PORT
+echo "Using $CALLBACK_URL as the callback url."
 echo
 
 echo Creating user pool client.
@@ -229,13 +270,19 @@ CLIENT_ID=$(cat create-user-pool-client.json | jq -r .UserPoolClient.ClientId)
 echo Created user pool client with client id: $CLIENT_ID
 echo
 
-echo "Go into the AWS amplify console at (https://$AWS_REGION_DEFAULT.console.aws.amazon.com/amplify/home?region=$AWS_REGION_DEFAULT)."
+AMPLIFY_CONSOLE_URL=https://$AWS_REGION_DEFAULT.console.aws.amazon.com/amplify/home?region=$AWS_REGION_DEFAULT
+echo "Go into the AWS amplify console at ($AMPLIFY_CONSOLE_URL)."
+open $AMPLIFY_CONSOLE_URL
 read
 
 echo "Click New App and choose Build an app"
 read
 
-echo "Give the app a name such as \"demo-sso-$MANTISSA\" and click Confirm deployment."
+echo "Give the app a name such as \"$IDENTIFIER_NO_ENV\" which is now on the clipboard."
+echo $IDENTIFIER_NO_ENV | pbcopy
+read
+
+echo "Click Confirm deployment."
 read
 
 echo "Wait for amplify to initialise the app and then click on \"Launch Studio\" the default backend name is staging."
@@ -274,11 +321,20 @@ read
 echo "Answer all the questions, this probably involes accepting all the defaults."
 read
 
-echo "If working in dev make sure the site is running with the command below: "
+echo When using react locally https with a self signed certificate can be used with the following command: 
+echo
 echo HTTPS=true PORT=$PORT npm start
+echo 
+echo However, chrome will reject self-signed certificates. 
+echo You can enable self-signed certificates on localhost by going to 
+echo 
+echo chrome://flags/#allow-insecure-localhost 
+echo 
+echo and enabling the option.
 read
 
-echo Open the cognito management console at https://console.aws.amazon.com/cognito/home
+echo Open the cognito management console at $COGNITO_CONSOLE_URL
+open $COGNITO_CONSOLE_URL
 read
 
 echo Click into the userpool we have created: $POOL_NAME
@@ -296,7 +352,6 @@ read
 echo Scroll down to Hosted UI and Click View Hosted UI
 read
 
-TOKEN_URL="https://$DOMAIN_PREFIX.auth.$AWS_REGION_DEFAULT.amazoncognito.com/oauth2/token"
 echo If everything has been configured correctly you should be directed to Microsoft to log in,
 echo as we have not set up any other authenticaion methods if you are logged in already you will 
 echo then get transferred back to the site with a query parameter of code and a value that can 

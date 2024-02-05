@@ -7,6 +7,12 @@ DEFAULT_GROUPS_ATTRIBUTE=azure_groups
 DEFAULT_PORT=3000
 CHOSEN_PORT=""
 
+DEFAULT_GROUP_CLAIM_NAME=http://schemas.microsoft.com/ws/2008/06/identity/claims/groups
+DEFAULT_MAIL_CLAIM_NAME=http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+DEFAULT_GIVENNAME_CLAIM_NAME=http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname
+DEFAULT_PRINCIPALNAME_CLAIM_NAME=http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
+DEFAULT_SURNAME_CLAIM_NAME=http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname
+
 AZURE_PORTAL_URL=https://portal.azure.com
 COGNITO_CONSOLE_URL=https://console.aws.amazon.com/cognito/home
 echo "Create User Pool and Connect to Azure AD (Entra ID)"
@@ -59,7 +65,7 @@ read -p "Would you like to use a mantissa today, type NONE to reject the default
 MANTISSA=${INPUT:-$DEFAULT_MANTISSA}
 echo
 
-DEFAULT_IDENTIIFER=${APP_NAME}-${ENV_NAME}-${MANTISSA}
+DEFAULT_IDENTIFIER=${APP_NAME}-${ENV_NAME}-${MANTISSA}
 DEFAULT_IDENTIFIER_NO_ENV=${APP_NAME}-${MANTISSA}
 if [ "$MANTISSA" == "NONE" ]; then
   DEFAULT_IDENTIIFER=${APP_NAME}-${ENV_NAME}
@@ -171,27 +177,32 @@ read
 echo Click Groups assigned to the application option in the popup.
 read
 
-echo Leave source attribute as Group ID and press save.
+echo Leave source attribute as Group ID and press Save.
 read
 
 echo Copy the value from the newly created Group claims and paste below
-read GROUP_CLAIM_NAME
+read -p "($DEFAULT_GROUP_CLAIM_NAME)" INPUT
+GROUP_CLAIM_NAME=${INPUT:-$DEFAULT_GROUP_CLAIM_NAME}
 echo
 
 echo Copy the value from the email claim and paste below
-read MAIL_CLAIM_NAME
+read -p "($DEFAULT_MAIL_CLAIM_NAME)" INPUT
+MAIL_CLAIM_NAME=${INPUT:-$DEFAULT_MAIL_CLAIM_NAME}
 echo
 
 echo Copy the value from the given name claim and paste below.
-read GIVENNAME_CLAIM_NAME
+read -p "($DEFAULT_GIVENNAME_CLAIM_NAME)" INPUT
+GIVENNAME_CLAIM_NAME=${INPUT:-$DEFAULT_GIVENNAME_CLAIM_NAME}
 echo
 
 echo Copy the value from the principal name claim and paste below.
-read PRINCIPALNAME_CLAIM_NAME
+read -p "($DEFAULT_PRINCIPALNAME_CLAIM_NAME)" INPUT
+PRINCIPALNAME_CLAIM_NAME=${INPUT:-$DEFAULT_PRINCIPALNAME_CLAIM_NAME}
 echo
 
 echo Copy the value from the surname claim and paste below.
-read SURNAME_CLAIM_NAME
+read -p "($DEFAULT_SURNAME_CLAIM_NAME)" INPUT
+SURNAME_CLAIM_NAME=${INPUT:-$DEFAULT_SURNAME_CLAIM_NAME}
 echo
 
 echo "Close the Attributes & Claims window."

@@ -20,7 +20,7 @@ export const authApi = createApi({
           grant_type: "authorization_code",
           client_id: config.getClientId(),
           code,
-          redirect_uri: config.getLocalUrl(),
+          redirect_uri: config.getCallbackUrl(),
         }),
       }),
     }),

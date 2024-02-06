@@ -3,6 +3,8 @@ import "./App.css";
 import { useFetchAuthTokenFromCodeQuery } from "services/authService";
 import * as config from "config";
 import { Route, Routes, Navigate, BrowserRouter } from "react-router-dom";
+import Loading from "components/Loading";
+import Error from "components/Error";
 
 const loginHref = () => {
   return (
@@ -34,18 +36,25 @@ const Auth = () => {
     isLoading,
     isError,
   } = useFetchAuthTokenFromCodeQuery({ code }, { skip: !code });
+  if (queryParams.has("error")) {
+    return <Error
+      title={"Unable to get login code: " + queryParams.get("error")}
+      description={queryParams.get("error_description")}
+    />;
+  }
+  if (isLoading) {
+    return <Loading />;
+  }
+  if (isError) {
+    return <Error
+      title={"Unable to load token from code"}
+      description={JSON.stringify(token, null, 2)}
+    />;
+  }
   if (token) {
     AuthToken.setToken(token);
     return <Navigate to={"/"} />;
   }
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-  if (isError) {
-    return <div>Error</div>;
-  }
-  console.log(queryParams);
-  return <div>{queryParams}</div>;
 };
 
 const WhirlyGig = () => (

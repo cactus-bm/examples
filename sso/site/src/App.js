@@ -1,87 +1,25 @@
+import Authenticator from "Authenticator";
 import logo from "./logo.svg";
 import "./App.css";
-import { useFetchAuthTokenFromCodeQuery } from "services/authService";
-import * as config from "config";
-import { Route, Routes, Navigate, BrowserRouter } from "react-router-dom";
-import Loading from "components/Loading";
-import Error from "components/Error";
-import AuthToken from "AuthToken";
-
-const loginHref = () => {
-  return (
-    `https://${config.getOAuthDomain()}/oauth2/authorize?` +
-    new URLSearchParams({
-      scope: "email openid",
-      response_type: "code",
-      client_id: config.getClientId(),
-      redirect_uri: config.getCallbackUrl(),
-    })
-  );
-};
-
-const Auth = () => {
-  const queryParams = new URLSearchParams(window.location.search);
-  const code = queryParams.get("code");
-  const {
-    data: token,
-    isLoading,
-    isError,
-  } = useFetchAuthTokenFromCodeQuery({ code }, { skip: !code });
-  if (queryParams.has("error")) {
-    return <Error
-      title={"Unable to get login code: " + queryParams.get("error")}
-      description={queryParams.get("error_description")}
-    />;
-  }
-  if (isLoading) {
-    return <Loading />;
-  }
-  if (isError) {
-    return <Error
-      title={"Unable to load token from code"}
-      description={JSON.stringify(token, null, 2)}
-    />;
-  }
-  if (token) {
-    AuthToken.setToken(token);
-    return <Navigate to={"/"} />;
-  }
-};
-
-const WhirlyGig = () => (
-  <div className="App">
-    <header className="App-header">
-      <img src={logo} className="App-logo" alt="logo" />
-      <a
-        className="App-link"
-        href="https://reactjs.org"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        You are logged in.
-      </a>
-    </header>
-  </div>
-);
-
-const Redirect = ({ to }) => {
-  window.location.replace(to);
-  return <></>;
-};
 
 const App = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path={"auth"} element={<Auth />} />
-        {AuthToken.getToken() ? (
-          <Route path={"*"} element={<WhirlyGig />} />
-        ) : (
-          <Route path={"*"} element={<Redirect to={loginHref()} />} />
-        )}
-      </Routes>
-    </BrowserRouter>
-  );
-};
+    return (
+        <Authenticator>
+            <div className="App">
+                <header className="App-header">
+                    <img src={logo} className="App-logo" alt="logo" />
+                    <a
+                        className="App-link"
+                        href="https://reactjs.org"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        You are logged in.
+                    </a>
+                </header>
+            </div>
+        </Authenticator>
+    )
+}
 
 export default App;

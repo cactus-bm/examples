@@ -5,6 +5,7 @@ import * as config from "config";
 import { Route, Routes, Navigate, BrowserRouter } from "react-router-dom";
 import Loading from "components/Loading";
 import Error from "components/Error";
+import AuthToken from "AuthToken";
 
 const loginHref = () => {
   return (
@@ -17,16 +18,6 @@ const loginHref = () => {
     })
   );
 };
-
-class AuthToken {
-  static setToken(token) {
-    localStorage.setItem("authToken", token);
-  }
-
-  static getToken() {
-    return localStorage.getItem("authToken");
-  }
-}
 
 const Auth = () => {
   const queryParams = new URLSearchParams(window.location.search);

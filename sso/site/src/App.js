@@ -1,6 +1,7 @@
 import Authenticator from "Authenticator";
 import logo from "./logo.svg";
 import "./App.css";
+import AuthToken from "AuthToken";
 
 const App = () => {
     return (
@@ -14,7 +15,7 @@ const App = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        You are logged in.
+                        {AuthToken.getClaims()}
                     </a>
                 </header>
             </div>

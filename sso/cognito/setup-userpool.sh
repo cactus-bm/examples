@@ -100,8 +100,9 @@ echo
 
 echo Assigning variables for future use:
 ENTITY_ID=urn:amazon:cognito:sp:$POOL_ID
-REPLY_URL=https://$DOMAIN_PREFIX.auth.$AWS_REGION_DEFAULT.amazoncognito.com/saml2/idpresponse
-TOKEN_URL=https://$DOMAIN_PREFIX.auth.$AWS_REGION_DEFAULT.amazoncognito.com/oauth2/token
+OAUTH_DOMAIN=$DOMAIN_PREFIX.auth.$AWS_REGION_DEFAULT.amazoncognito.com
+REPLY_URL=https://$OAUTH_DOMAIN/saml2/idpresponse
+TOKEN_URL=https://$OAUTH_DOMAIN/oauth2/token
 echo ENTITY_ID: $ENTITY_ID
 echo REPLY_URL: $REPLY_URL
 echo TOKEN_URL: $TOKEN_URL
@@ -402,4 +403,12 @@ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" \
      -d code=$CODE \
      -d redirect_uri=$CALLBACK_URL \
      $TOKEN_URL | jq .
+echo
 
+echo "To run the example site app with all of the above configured place the following in a .env file in the root of the site directory."
+echo
+echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN
+echo REACT_APP_USERPOOL_ID=$POOL_ID
+echo REACT_APP_CLIENT_ID=$CLIENT_ID
+echo REACT_APP_REGION=$AWS_REGION_DEFAULT
+echo REACT_APP_LOCAL_URL=$CALLBACK_URL

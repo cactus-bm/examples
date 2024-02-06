@@ -293,56 +293,6 @@ CLIENT_ID=$(cat create-user-pool-client.json | jq -r .UserPoolClient.ClientId)
 echo Created user pool client with client id: $CLIENT_ID
 echo
 
-AMPLIFY_CONSOLE_URL=https://$AWS_REGION_DEFAULT.console.aws.amazon.com/amplify/home?region=$AWS_REGION_DEFAULT
-echo "Go into the AWS amplify console at ($AMPLIFY_CONSOLE_URL)."
-open $AMPLIFY_CONSOLE_URL
-read
-
-echo "Click New App and choose Build an app"
-read
-
-echo "Give the app a name such as \"$DEFAULT_IDENTIFIER_NO_ENV\" which is now on the clipboard."
-echo $DEFAULT_IDENTIFIER_NO_ENV | pbcopy
-read
-
-echo "Click Confirm deployment."
-read
-
-echo "Wait for amplify to initialise the app and then click on \"Launch Studio\" the default backend name is staging."
-read
-
-echo "If a warning appears about the app not being connected to a valid back end select \"staging\" from the dropdown and click \"Connect Backend\"."
-read
-
-echo "Click \"Authentication\" in the left hand side bar."
-read
-
-echo "Click \"Reuse existing Amazon Cognito resources\"."
-read
-
-echo "Under Select a Cognito User Pool, select the one we have just created. Pool name: $POOL_NAME, pool id: $POOL_ID"
-read
-
-echo "Under Select an app client choose the one we have just created. Client name: $CLIENT_NAME, client id: $CLIENT_ID"
-read
-
-echo "Wait for it to finish processing and the click Import."
-read
-
-echo "Wait for it to finish deploying."
-read
-
-echo "Click the copy to clipboard button next to the amplify pull ... command."
-read
-
-echo "Open a terminal and navigate to the site directory for this project."
-read
-
-echo Paste the command that has just been copied to the clipboard and press return.
-read
-
-echo "Answer all the questions, this probably involes accepting all the defaults."
-read
 
 if [ -n "$CHOSEN_PORT" ]; then
     echo When using react locally https with a self signed certificate can be used with the following command: 

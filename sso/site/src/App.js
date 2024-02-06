@@ -10,7 +10,7 @@ const redirectToLogin = () => {
       scope: "email openid",
       response_type: "code",
       client_id: config.getClientId(),
-      redirect_uri: config.getLocalUrl(),
+      redirect_uri: config.getCallbackUrl(),
     });
 };
 

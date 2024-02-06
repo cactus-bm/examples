@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 DEFAULT_APP_NAME=demo-sso
 DEFAULT_ENV_NAME=dev
 DEFAULT_MANTISSA=$(date +"%Y%m%d%H%M")

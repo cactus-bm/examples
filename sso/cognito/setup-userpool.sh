@@ -293,6 +293,16 @@ CLIENT_ID=$(cat create-user-pool-client.json | jq -r .UserPoolClient.ClientId)
 echo Created user pool client with client id: $CLIENT_ID
 echo
 
+urlencode() {
+    local length="${#1}"
+    for (( i = 0; i < length; i++ )); do
+        local c="${1:i:1}"
+        case $c in
+            [a-zA-Z0-9.~_-]) printf "$c" ;;
+            *) printf '%%%02X' "'$c" ;;
+        esac
+    done
+}
 
 if [ -n "$CHOSEN_PORT" ]; then
     echo When using react locally https with a self signed certificate can be used with the following command: 
@@ -308,24 +318,16 @@ if [ -n "$CHOSEN_PORT" ]; then
     read
 fi
 
-echo Open the cognito management console at $COGNITO_CONSOLE_URL
-open $COGNITO_CONSOLE_URL
-read
-
-echo Click into the userpool we have created: $POOL_NAME
-read
-
-echo Click App integration.
-read
-
-echo Scroll down to App clients and analytics.
-read
-
-echo Click on the client we have just made: $CLIENT_NAME
-read
-
-echo Scroll down to Hosted UI and Click View Hosted UI
-read
+echo You can check what Cognito hosted login screen will look by visiting the following url:
+echo
+TEST_URL="https://$OAUTH_DOMAIN/oauth2/authorize?scope=email+openid&response_type=code&client_id=$CLIENT_ID&redirect_uri=$(urlencode $CALLBACK_URL)"
+echo $TEST_URL
+echo
+read -p "Would you like to open the url in your default browser? (y/n) " INPUT
+if [ "$INPUT" == "y" ]; then
+    open $TEST_URL
+fi
+echo
 
 echo If everything has been configured correctly you should be directed to Microsoft to log in,
 echo as we have not set up any other authenticaion methods if you are logged in already you will 

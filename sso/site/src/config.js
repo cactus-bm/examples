@@ -11,10 +11,12 @@ export const getRegion = () => REGION;
 export const getUserPoolId = () => USERPOOL_ID;
 export const getClientId = () => CLIENT_ID;
 
-export const getOAuth= () => ({
-    domain: OAUTH_DOMAIN,
-    scope: OAUTH_SCOPE,
-    redirectSignIn: OAUTH_CALLBACK_URL,
-    redirectSignOut: OAUTH_SIGNOUT_URL,
-    responseType: OAUTH_RESPONSE_TYPE,
+export const getOAuthSignoutUrl = () => OAUTH_SIGNOUT_URL;
+
+export const getOAuth = () => ({
+  domain: OAUTH_DOMAIN,
+  scope: OAUTH_SCOPE.split(","),
+  redirectSignIn: OAUTH_CALLBACK_URL,
+  redirectSignOut: OAUTH_SIGNOUT_URL,
+  responseType: OAUTH_RESPONSE_TYPE,
 });

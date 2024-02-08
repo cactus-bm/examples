@@ -275,7 +275,7 @@ echo
 CALLBACK_URL=${INPUT:-$DEFAULT_CALLBACK}
 if [[ "$CALLBACK_URL" =~ ^[0-9]+$ ]]; then
   CHOSEN_PORT=$CALLBACK_URL
-  CALLBACK_URL=https://localhost:$CALLBACK_URL/auth
+  CALLBACK_URL=https://localhost:$CALLBACK_URL/
 fi
 
 echo "Using $CALLBACK_URL as the callback url."

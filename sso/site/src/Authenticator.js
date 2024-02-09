@@ -16,7 +16,7 @@ Hub.listen("auth", ({ payload: { data, event } }) => {
     case "cognitoHostedUI_failure":
       setErrorMessage(data);
       break;
-    case "cognitoHostedUI_success":
+    case "cognitoHostedUI":
       clearErrorMessage();
       break;
     default:

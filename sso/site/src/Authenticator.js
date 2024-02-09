@@ -1,7 +1,7 @@
 import { Route, Routes, BrowserRouter } from "react-router-dom";
 import Loading from "components/Loading";
 import Error from "components/Error";
-import { Auth } from "aws-amplify";
+import { Auth, Hub } from "aws-amplify";
 import { useState, useEffect } from "react";
 import * as config from "config";
 
@@ -97,8 +97,6 @@ const Validator = ({ children }) => {
     return <Error title={"Unable to login."} description={getErrorMessage()} />;
   }
 };
-
-
 
 const Authenticator = ({ children }) => {
   return (

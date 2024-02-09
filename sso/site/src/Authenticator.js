@@ -2,12 +2,15 @@ import { Route, Routes, BrowserRouter } from "react-router-dom";
 import Loading from "components/Loading";
 import Error from "components/Error";
 import { Auth } from "aws-amplify";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as config from "config";
 
-const MAX_RETRIES = 3;
+const triggerSignIn = async () => {
+  Auth.federatedSignIn();
+};
 
 const SignIn = () => {
-  Auth.federatedSignIn();
+  triggerSignIn();
   return <Loading />;
 };
 
@@ -19,50 +22,33 @@ const SignOut = () => {
   if (loading) {
     return <Loading />;
   }
+  window.location.replace(config.getOAuthSignoutUrl());
   return <>{"You have been signed out."}</>;
 };
 
 const Validator = ({ children }) => {
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null);
-  const [error, setError] = useState(null);
-  const [count, setCount] = useState(0);
+  const [session, setSession] = useState(null);
 
-  Auth.currentSession().then((session) => {
-    console.log("currentSession", session);
-  });
-  Auth.currentAuthenticatedUser().then((user) => {
-    console.log("currentAuthenticatedUser", user);
-  });
-  Auth.currentUserPoolUser().then((userPoolUser) => {
-    console.log("currentUserPoolUser", userPoolUser);
-  });
-
-  if (!loading && !user && !error) {
-    setLoading(true);
-    Auth.currentAuthenticatedUser().then((currentAuthenticatedUser) => {
-      if (currentAuthenticatedUser == null) {
-        if (count < MAX_RETRIES) {
-          setCount(count + 1);
-          Auth.federatedSignIn();
-        } else {
-          setLoading(false);
-          setError(`Failed to log you in after ${MAX_RETRIES} attempts.`);
-        }
-      } else {
+  useEffect(() => {
+    const login = async () => {
+      try {
+        setLoading(true);
+        const session = await Auth.currentSession();
+        setSession(session);
+      } catch (error) {
+        triggerSignIn();
+      } finally {
         setLoading(false);
-        setUser(currentAuthenticatedUser);
       }
-    });
-  }
+    };
+    login();
+  }, []);
 
   if (loading) {
     return <Loading />;
   }
-  if (error) {
-    return <Error title={"Unable to log you in."} description={error} />;
-  }
-  if (user) {
+  if (session) {
     return <>{children}</>;
   }
   return (

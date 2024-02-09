@@ -91,6 +91,27 @@ const Validator = ({ children }) => {
 
   if (loading) {
     return <Loading />;
+  } else if (getErrorMessage()) {
+    return (
+      <Error
+        title={"Unable to login."}
+        description={getErrorMessage()}
+        buttons={[
+          {
+            label: "Sign In",
+            variant: "contained",
+            color: "primary",
+            onClick: () => window.location.replace("/signin"),
+          },
+          {
+            label: "Sign Out",
+            variant: "contained",
+            color: "secondary",
+            onClick: () => window.location.replace("/signout"),
+          },
+        ]}
+      />
+    );
   } else if (session) {
     return <>{children}</>;
   } else {

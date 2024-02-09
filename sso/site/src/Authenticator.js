@@ -1,74 +1,131 @@
-
-import { useFetchAuthTokenFromCodeQuery } from "services/authService";
-import * as config from "config";
-import { Route, Routes, Navigate, BrowserRouter } from "react-router-dom";
+import { Route, Routes, BrowserRouter } from "react-router-dom";
 import Loading from "components/Loading";
 import Error from "components/Error";
-import AuthToken from "AuthToken";
+import { Auth, Hub } from "aws-amplify";
+import { useState, useEffect } from "react";
+import * as config from "config";
 
-const loginHref = () => {
-  return (
-    `https://${config.getOAuthDomain()}/oauth2/authorize?` +
-    new URLSearchParams({
-      scope: "email openid",
-      response_type: "code",
-      client_id: config.getClientId(),
-      redirect_uri: config.getCallbackUrl(),
-    })
-  );
+const ERROR_MESSAGE_KEY =
+  "Authenticator.Hub.auth.cognitoHostedUI_failure.message";
+const ERROR_TIMESTAMP_KEY =
+  "Authenticator.Hub.auth.cognitoHostedUI_failure.timestamp";
+const ERRORS_PERSIST_FOR = 1000 * 60 * 5;
+
+Hub.listen("auth", ({ payload: { data, event } }) => {
+  switch (event) {
+    case "cognitoHostedUI_failure":
+      setErrorMessage(data);
+      break;
+    case "cognitoHostedUI":
+      clearErrorMessage();
+      break;
+    default:
+      break;
+  }
+});
+
+const getErrorMessage = () => {
+  const timestampStr = localStorage.getItem(ERROR_TIMESTAMP_KEY);
+  if (timestampStr == null) {
+    return null;
+  }
+  const timestamp = new Date(timestampStr);
+  if (Date.now() - timestamp.getTime() > ERRORS_PERSIST_FOR) {
+    return null;
+  }
+  return localStorage.getItem(ERROR_MESSAGE_KEY);
 };
 
-const Auth = () => {
-  const queryParams = new URLSearchParams(window.location.search);
-  const code = queryParams.get("code");
-  const {
-    data: token,
-    isLoading,
-    isError,
-  } = useFetchAuthTokenFromCodeQuery({ code }, { skip: !code });
-  if (queryParams.has("error")) {
-    return <Error
-      title={"Unable to get login code: " + queryParams.get("error")}
-      description={queryParams.get("error_description")}
-    />;
-  }
-  if (isLoading) {
-    return <Loading />;
-  }
-  if (isError) {
-    return <Error
-      title={"Unable to load token from code"}
-      description={JSON.stringify(token, null, 2)}
-    />;
-  }
-  if (token) {
-    AuthToken.setToken(token);
-    return <Navigate to={"/"} />;
-  }
+const setErrorMessage = (data) => {
+  const decoded = decodeURIComponent(data.message.replace(/\+/g, " "));
+  localStorage.setItem(ERROR_MESSAGE_KEY, decoded);
+  localStorage.setItem(ERROR_TIMESTAMP_KEY, new Date().toISOString());
 };
 
-const Redirect = ({ to }) => {
-  window.location.replace(to);
-  return <></>;
+const clearErrorMessage = () => {
+  localStorage.removeItem(ERROR_MESSAGE_KEY);
+  localStorage.removeItem(ERROR_TIMESTAMP_KEY);
+};
+
+const triggerSignIn = async () => {
+  Auth.federatedSignIn();
+};
+
+const SignIn = () => {
+  triggerSignIn();
+  return <Loading />;
 };
 
 const SignOut = () => {
-  AuthToken.clearToken();
-  return <Navigate to={"/"} />;
+  const [loading, setLoading] = useState(true);
+  Auth.signOut().then(() => {
+    setLoading(false);
+  });
+  if (loading) {
+    return <Loading />;
+  }
+  window.location.replace(config.getOAuthSignoutUrl());
+  return <Loading />;
+};
+
+const Validator = ({ children }) => {
+  const [loading, setLoading] = useState(false);
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    const login = async () => {
+      try {
+        setLoading(true);
+        const session = await Auth.currentSession();
+        setSession(session);
+      } catch (error) {
+        if (getErrorMessage() == null) {
+          triggerSignIn();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    login();
+  }, []);
+
+  if (loading) {
+    return <Loading />;
+  } else if (getErrorMessage()) {
+    return (
+      <Error
+        title={"Unable to login."}
+        description={getErrorMessage()}
+        buttons={[
+          {
+            label: "Sign In",
+            variant: "contained",
+            color: "primary",
+            onClick: () => window.location.replace("/signin"),
+          },
+          {
+            label: "Sign Out",
+            variant: "contained",
+            color: "secondary",
+            onClick: () => window.location.replace("/signout"),
+          },
+        ]}
+      />
+    );
+  } else if (session) {
+    return <>{children}</>;
+  } else {
+    return <Loading />;
+  }
 };
 
 const Authenticator = ({ children }) => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path={"auth"} element={<Auth />} />
-        <Route path={"login"} element={<Redirect to={loginHref()} />} />
-        <Route path={"logoff"} element={<SignOut />} />
-        {AuthToken.getToken() ? (
-          <Route path={"*"} element={<>{children}</>} />
-        ) : (
-          <Route path={"*"} element={<Redirect to={loginHref()} />} />
-        )}
+        <Route path={"signin"} element={<SignIn />} />
+        <Route path={"signout"} element={<SignOut />} />
+        <Route path={"*"} element={<Validator children={children} />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,4 +1,8 @@
 #!/bin/bash
+set -e
+
+PARENT_DIR=$(dirname $0)
+
 DEFAULT_APP_NAME=demo-sso
 DEFAULT_ENV_NAME=dev
 DEFAULT_MANTISSA=$(date +"%Y%m%d%H%M")
@@ -273,7 +277,7 @@ echo
 CALLBACK_URL=${INPUT:-$DEFAULT_CALLBACK}
 if [[ "$CALLBACK_URL" =~ ^[0-9]+$ ]]; then
   CHOSEN_PORT=$CALLBACK_URL
-  CALLBACK_URL=https://localhost:$CALLBACK_URL/auth
+  CALLBACK_URL=https://localhost:$CALLBACK_URL/
 fi
 
 echo "Using $CALLBACK_URL as the callback url."
@@ -357,10 +361,28 @@ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" \
      $TOKEN_URL | jq .
 echo
 
+
 echo "To run the example site app with all of the above configured place the following in a .env file in the root of the site directory."
 echo
-echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN
 echo REACT_APP_USERPOOL_ID=$POOL_ID
 echo REACT_APP_CLIENT_ID=$CLIENT_ID
 echo REACT_APP_REGION=$AWS_REGION_DEFAULT
-echo REACT_APP_CALLBACK_URL=$CALLBACK_URL
+echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN
+echo REACT_APP_OAUTH_CALLBACK_URL=$CALLBACK_URL
+echo REACT_APP_OAUTH_SIGNOUT_URL=https://www.google.com/
+echo REACT_APP_OAUTH_SCOPE=email,openid
+echo REACT_APP_OAUTH_RESPONSE_TYPE=code
+
+TARGET_ENV_FILE=$PARENT_DIR/site/.env
+read -p "Would you like to have this file written to $TARGET_ENV_FILE? (y/n) " INPUT
+if [ "$INPUT" == "y" ]; then
+    echo REACT_APP_USERPOOL_ID=$POOL_ID > $TARGET_ENV_FILE
+    echo REACT_APP_CLIENT_ID=$CLIENT_ID >> $TARGET_ENV_FILE
+    echo REACT_APP_REGION=$AWS_REGION_DEFAULT >> $TARGET_ENV_FILE
+    echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN >> $TARGET_ENV_FILE
+    echo REACT_APP_OAUTH_CALLBACK_URL=$CALLBACK_URL >> $TARGET_ENV_FILE
+    echo REACT_APP_OAUTH_SIGNOUT_URL=https://www.google.com/ >> $TARGET_ENV_FILE
+    echo REACT_APP_OAUTH_SCOPE=email,openid >> $TARGET_ENV_FILE
+    echo REACT_APP_OAUTH_RESPONSE_TYPE=code >> $TARGET_ENV_FILE
+fi
+echo

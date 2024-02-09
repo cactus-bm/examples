@@ -1,7 +1,8 @@
 import { Route, Routes, BrowserRouter } from "react-router-dom";
 import Loading from "components/Loading";
 import Error from "components/Error";
-import { Auth, Hub } from "aws-amplify";
+import { signOut, getCurrentUser, signInWithRedirect } from "aws-amplify/auth";
+import { Hub } from "aws-amplify/utils";
 import { useState, useEffect } from "react";
 import * as config from "config";
 
@@ -48,7 +49,7 @@ const clearErrorMessage = () => {
 };
 
 const triggerSignIn = async () => {
-  Auth.federatedSignIn();
+  signInWithRedirect();
 };
 
 const SignIn = () => {
@@ -58,7 +59,7 @@ const SignIn = () => {
 
 const SignOut = () => {
   const [loading, setLoading] = useState(true);
-  Auth.signOut().then(() => {
+  signOut().then(() => {
     setLoading(false);
   });
   if (loading) {
@@ -70,14 +71,14 @@ const SignOut = () => {
 
 const Validator = ({ children }) => {
   const [loading, setLoading] = useState(false);
-  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const login = async () => {
       try {
         setLoading(true);
-        const session = await Auth.currentSession();
-        setSession(session);
+        const user = await getCurrentUser();
+        setUser(user);
       } catch (error) {
         if (getErrorMessage() == null) {
           triggerSignIn();
@@ -112,7 +113,7 @@ const Validator = ({ children }) => {
         ]}
       />
     );
-  } else if (session) {
+  } else if (user) {
     return <>{children}</>;
   } else {
     return <Loading />;

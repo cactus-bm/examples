@@ -2,7 +2,7 @@ import logo from "logo.svg";
 import "App.css";
 import Loading from "components/Loading";
 import Error from "components/Error";
-import { Auth } from "aws-amplify";
+import { fetchAuthSession } from "aws-amplify/auth";
 import { useState, useEffect } from "react";
 
 const WhirlyGig = () => {
@@ -14,8 +14,8 @@ const WhirlyGig = () => {
     const fetchSession = async () => {
       try {
         setLoading(true);
-        const session = await Auth.currentSession();
-        const payload = session?.getIdToken()?.payload;
+        const session = await fetchAuthSession();
+        const payload = session?.tokens?.idToken?.payload;
         if (payload == null) {
           setError("Failed to retrieve user information.");
         } else {

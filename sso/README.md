@@ -2,25 +2,26 @@
 
 A demo application for showing how to configure sso using aws cognito and azure ad (now called entra id).
 
-## The Magic
+## Amplify v5 vs v6 changes
 
-The important point to understand is that when you call:
+`Auth.federatedSignIn` has been renamed to `signInWithRedirect`
 
-`Auth.federatedSignIn()`
-
-Provided the request redirects to your website `Amplify.Auth` will handle everything for you as if by magic.
+`fetchAuthSession` does not throw an exception if the user is not logged in as `Auth.currentSession` did. 
+However, `getCurrentUser` does throw an exception if not logged in.
 
 ## Cognito
 
 There a script, designed to be run on a mac, that will take you through the steps required to set everything up.
 
-You can review the commands to understand better.
+You can review the commands to understand better. 
+
+As a general rule you should not run random scripts that you found on the internet.
 
 The actions that you need to take in Azure Portal are given to you step-by-step.
 
 ## Site
 
-This example uses Amplify v5.
+This example uses Amplify v6.
 
 This is a very simple example site that will let you log in with Azure Id.
 
@@ -37,10 +38,7 @@ have a flag that feels like it should work with Hosted UI if you set it to true.
 renonvated their website and I found lots of hopefully useful links from across the internet to be no longer pointing to the documentation
 and instead redirecting one to the front page.
 
-Now I have finished this example I don't know if it is worth putting up on the internet, but given that I have lost a week that could have
-been easily avoided if a simple example had existed I will place up anyway.
-
-The only way to get sign in failures appears to be to use the Hub and register for the events. With redirects happening to an external
+The only way to get sign in failures appears to be to use the `Hub` and register for the auth events. With redirects happening to an external
 website local storage is used to store the most recent login failure message. A timestamp is used to ensure that reattempts would happen
 after an appropriate period of time.
 

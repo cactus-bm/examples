@@ -5,6 +5,48 @@ import { Auth } from "aws-amplify";
 import { useState, useEffect } from "react";
 import * as config from "config";
 
+const ERROR_MESSAGE_KEY =
+  "Authenticator.Hub.auth.cognitoHostedUI_failure.message";
+const ERROR_TIMESTAMP_KEY =
+  "Authenticator.Hub.auth.cognitoHostedUI_failure.timestamp";
+const ERRORS_PERSIST_FOR = 1000 * 60 * 5;
+
+Hub.listen("auth", ({ payload: { data, event } }) => {
+  switch (event) {
+    case "cognitoHostedUI_failure":
+      setErrorMessage(data);
+      break;
+    case "cognitoHostedUI_success":
+      clearErrorMessage();
+      break;
+    default:
+      break;
+  }
+});
+
+const getErrorMessage = () => {
+  const timestampStr = localStorage.getItem(ERROR_TIMESTAMP_KEY);
+  if (timestampStr == null) {
+    return null;
+  }
+  const timestamp = new Date(timestampStr);
+  if (Date.now() - timestamp.getTime() > ERRORS_PERSIST_FOR) {
+    return null;
+  }
+  return localStorage.getItem(ERROR_MESSAGE_KEY);
+};
+
+const setErrorMessage = (data) => {
+  const decoded = decodeURIComponent(data.message.replace(/\+/g, " "));
+  localStorage.setItem(ERROR_MESSAGE_KEY, decoded);
+  localStorage.setItem(ERROR_TIMESTAMP_KEY, new Date().toISOString());
+};
+
+const clearErrorMessage = () => {
+  localStorage.removeItem(ERROR_MESSAGE_KEY);
+  localStorage.removeItem(ERROR_TIMESTAMP_KEY);
+};
+
 const triggerSignIn = async () => {
   Auth.federatedSignIn();
 };
@@ -23,7 +65,7 @@ const SignOut = () => {
     return <Loading />;
   }
   window.location.replace(config.getOAuthSignoutUrl());
-  return <>{"You have been signed out."}</>;
+  return <Loading />;
 };
 
 const Validator = ({ children }) => {
@@ -37,7 +79,9 @@ const Validator = ({ children }) => {
         const session = await Auth.currentSession();
         setSession(session);
       } catch (error) {
-        triggerSignIn();
+        if (getErrorMessage() == null) {
+          triggerSignIn();
+        }
       } finally {
         setLoading(false);
       }
@@ -47,17 +91,14 @@ const Validator = ({ children }) => {
 
   if (loading) {
     return <Loading />;
-  }
-  if (session) {
+  } else if (session) {
     return <>{children}</>;
+  } else {
+    return <Error title={"Unable to login."} description={getErrorMessage()} />;
   }
-  return (
-    <Error
-      title={"You are not authenticated."}
-      description={"Some how you are not authenticated. We do not know why."}
-    />
-  );
 };
+
+
 
 const Authenticator = ({ children }) => {
   return (

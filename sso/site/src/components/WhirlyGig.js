@@ -34,7 +34,7 @@ const WhirlyGig = () => {
     return <Loading />;
   }
   if (error) {
-    return <Error error={error} />;
+    return <Error description={error} />;
   }
   return (
     <div className="App">

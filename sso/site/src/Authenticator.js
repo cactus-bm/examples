@@ -94,7 +94,7 @@ const Validator = ({ children }) => {
   } else if (session) {
     return <>{children}</>;
   } else {
-    return <Error title={"Unable to login."} description={getErrorMessage()} />;
+    return <Loading />;
   }
 };
 

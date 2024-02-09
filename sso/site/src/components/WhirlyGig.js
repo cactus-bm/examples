@@ -23,7 +23,6 @@ const WhirlyGig = () => {
         }
       } catch (error) {
         setError("Failed to retrieve the current session.");
-        console.log("currentSession error", error);
       } finally {
         setLoading(false);
       }

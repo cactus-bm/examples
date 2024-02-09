@@ -20,6 +20,8 @@ The actions that you need to take in Azure Portal are given to you step-by-step.
 
 ## Site
 
+This example uses Amplify v5.
+
 This is a very simple example site that will let you log in with Azure Id.
 
 It adds the following very basic routes

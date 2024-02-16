@@ -256,11 +256,16 @@ read -p "Enter a name for the id provider with a maximum of 32 chars. ($DEFAULT_
 ID_PROVIDER_NAME=${INPUT:-$DEFAULT_ID_PROVIDER_NAME}
 echo
 
+echo "Enter the identifiers this identity provide will be used for separated "
+read -p "with spaces. Identifiers can be domains or email addresses." IDENTIFIERS
+echo
+
 echo Creating identity provider $ID_PROVIDER_NAME.
 aws cognito-idp create-identity-provider \
     --user-pool-id $POOL_ID \
     --provider-name=$ID_PROVIDER_NAME \
     --provider-type SAML \
+    --idp-identifiers $IDENTIFIERS \
     --provider-details MetadataURL=$APP_FEDERATION_METADATA_URL \
     --attribute-mapping email=$MAIL_CLAIM_NAME,custom:$GROUPS_ATTRIBUTE=$GROUP_CLAIM_NAME > create-identity-provider.json
 echo Created identity provider $ID_PROVIDER_NAME

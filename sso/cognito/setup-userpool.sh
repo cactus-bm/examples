@@ -102,6 +102,17 @@ aws cognito-idp create-user-pool-domain --domain $DOMAIN_PREFIX --user-pool-id $
 echo Created User Pool Domain
 echo
 
+read -p "Enter a name for the groups attribute in cognito which will store the azure groups: ($DEFAULT_GROUPS_ATTRIBUTE) " INPUT
+GROUPS_ATTRIBUTE=${INPUT:-$DEFAULT_GROUPS_ATTRIBUTE}
+echo
+
+echo Adding groups attribute $GROUPS_ATTRIBUTE to pool: $POOL_ID
+aws cognito-idp add-custom-attributes \
+    --user-pool-id $POOL_ID \
+    --custom-attributes Name=$GROUPS_ATTRIBUTE,AttributeDataType="String"
+echo Added groups attribute $GROUPS_ATTRIBUTE to pool: $POOL_ID
+echo
+
 echo Assigning variables for future use:
 ENTITY_ID=urn:amazon:cognito:sp:$POOL_ID
 OAUTH_DOMAIN=$DOMAIN_PREFIX.auth.$AWS_REGION_DEFAULT.amazoncognito.com
@@ -240,17 +251,6 @@ read
 echo Click Assign
 read
 
-read -p "Enter a name for the groups attribute in cognito which will store the azure groups: ($DEFAULT_GROUPS_ATTRIBUTE) " INPUT
-GROUPS_ATTRIBUTE=${INPUT:-$DEFAULT_GROUPS_ATTRIBUTE}
-echo
-
-echo Adding groups attribute $GROUPS_ATTRIBUTE to pool: $POOL_ID
-aws cognito-idp add-custom-attributes \
-    --user-pool-id $POOL_ID \
-    --custom-attributes Name=$GROUPS_ATTRIBUTE,AttributeDataType="String"
-echo Added groups attribute $GROUPS_ATTRIBUTE to pool: $POOL_ID
-echo
-
 DEFAULT_ID_PROVIDER_NAME=azure-${IDENTIFIER}
 read -p "Enter a name for the id provider with a maximum of 32 chars. ($DEFAULT_ID_PROVIDER_NAME) " INPUT
 ID_PROVIDER_NAME=${INPUT:-$DEFAULT_ID_PROVIDER_NAME}
@@ -314,6 +314,32 @@ urlencode() {
 }
 
 if [ -n "$CHOSEN_PORT" ]; then
+
+    echo "To run the example site app with all of the above configured place the following in a .env file in the root of the site directory."
+    echo
+    echo REACT_APP_USERPOOL_ID=$POOL_ID
+    echo REACT_APP_CLIENT_ID=$CLIENT_ID
+    echo REACT_APP_REGION=$AWS_REGION_DEFAULT
+    echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN
+    echo REACT_APP_OAUTH_CALLBACK_URL=$CALLBACK_URL
+    echo REACT_APP_OAUTH_SIGNOUT_URL=https://www.google.com/
+    echo REACT_APP_OAUTH_SCOPE=email,openid
+    echo REACT_APP_OAUTH_RESPONSE_TYPE=code
+
+    TARGET_ENV_FILE=$PARENT_DIR/site/.env
+    read -p "Would you like to have this file written to $TARGET_ENV_FILE? (y/n) " INPUT
+    if [ "$INPUT" == "y" ]; then
+        echo REACT_APP_USERPOOL_ID=$POOL_ID > $TARGET_ENV_FILE
+        echo REACT_APP_CLIENT_ID=$CLIENT_ID >> $TARGET_ENV_FILE
+        echo REACT_APP_REGION=$AWS_REGION_DEFAULT >> $TARGET_ENV_FILE
+        echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN >> $TARGET_ENV_FILE
+        echo REACT_APP_OAUTH_CALLBACK_URL=$CALLBACK_URL >> $TARGET_ENV_FILE
+        echo REACT_APP_OAUTH_SIGNOUT_URL=https://www.google.com/ >> $TARGET_ENV_FILE
+        echo REACT_APP_OAUTH_SCOPE=email,openid >> $TARGET_ENV_FILE
+        echo REACT_APP_OAUTH_RESPONSE_TYPE=code >> $TARGET_ENV_FILE
+    fi
+    echo
+
     echo When using react locally https with a self signed certificate can be used with the following command: 
     echo
     echo HTTPS=true PORT=$CHOSEN_PORT npm start
@@ -367,27 +393,3 @@ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" \
 echo
 
 
-echo "To run the example site app with all of the above configured place the following in a .env file in the root of the site directory."
-echo
-echo REACT_APP_USERPOOL_ID=$POOL_ID
-echo REACT_APP_CLIENT_ID=$CLIENT_ID
-echo REACT_APP_REGION=$AWS_REGION_DEFAULT
-echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN
-echo REACT_APP_OAUTH_CALLBACK_URL=$CALLBACK_URL
-echo REACT_APP_OAUTH_SIGNOUT_URL=https://www.google.com/
-echo REACT_APP_OAUTH_SCOPE=email,openid
-echo REACT_APP_OAUTH_RESPONSE_TYPE=code
-
-TARGET_ENV_FILE=$PARENT_DIR/site/.env
-read -p "Would you like to have this file written to $TARGET_ENV_FILE? (y/n) " INPUT
-if [ "$INPUT" == "y" ]; then
-    echo REACT_APP_USERPOOL_ID=$POOL_ID > $TARGET_ENV_FILE
-    echo REACT_APP_CLIENT_ID=$CLIENT_ID >> $TARGET_ENV_FILE
-    echo REACT_APP_REGION=$AWS_REGION_DEFAULT >> $TARGET_ENV_FILE
-    echo REACT_APP_OAUTH_DOMAIN=$OAUTH_DOMAIN >> $TARGET_ENV_FILE
-    echo REACT_APP_OAUTH_CALLBACK_URL=$CALLBACK_URL >> $TARGET_ENV_FILE
-    echo REACT_APP_OAUTH_SIGNOUT_URL=https://www.google.com/ >> $TARGET_ENV_FILE
-    echo REACT_APP_OAUTH_SCOPE=email,openid >> $TARGET_ENV_FILE
-    echo REACT_APP_OAUTH_RESPONSE_TYPE=code >> $TARGET_ENV_FILE
-fi
-echo
